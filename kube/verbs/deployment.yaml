@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verbs-deployment
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: verbs
+  template:
+    metadata:
+      labels:
+        app: verbs
+    spec:
+      containers:
+        - name: verb-api-container
+          image: verbs:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000

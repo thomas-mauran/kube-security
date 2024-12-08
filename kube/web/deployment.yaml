@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  namespace: app
+spec:
+  replicas: 1  # Number of pods to run
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web-container
+          image: web:latest  # Replace with your image name if different
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
