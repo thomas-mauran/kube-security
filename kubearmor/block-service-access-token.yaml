@@ -1,0 +1,15 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: block-service-access-token-access
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  file:
+    matchDirectories:
+    - dir: /run/secrets/kubernetes.io/serviceaccount/
+      recursive: true
+  action:
+    Block
