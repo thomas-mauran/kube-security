@@ -10,6 +10,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3001
-      nodePort: 30081  # Exposes the service externally on this port
 
   type: LoadBalancer

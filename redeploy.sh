@@ -32,3 +32,15 @@ kubectl -n app delete svc nouns-service
 kubectl apply -f kube/nouns
 
 echo "[X]  Build and imported nouns image"  
+
+
+docker build aggregator -t aggregator
+docker save aggregator:latest -o aggregator.tar
+sudo k3s ctr images import aggregator.tar
+
+kubectl -n app delete deployment aggregator-deployment
+kubectl -n app delete svc aggregator-service
+
+kubectl apply -f kube/aggregator
+
+echo "[X]  Build and imported web image"
