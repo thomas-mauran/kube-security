@@ -2,6 +2,33 @@
 
 The app is very simple it's a microservice made of a verb api a noun api and an aggregator returning a mix of the two.
 
+```mermaid
+graph TD
+    subgraph Microservice_App
+        A[Verb API] --> C[Aggregator]
+        B[Noun API] --> C
+        C --> D[Response: Mixed Verb and Noun]
+    end
+
+    subgraph Security_Elements
+        direction TB
+        Sec1[Kyverno: Admission and Mutation Policies] -->|Enforces Policies| API_Server
+        API_Server -->|Sends Logs and Events| Sec2[Falco: Threat Detection]
+        Sec2 -->|Alerts| Sec_Team[Security Team]
+        
+        Sec3[KubeArmor: Pod/Container Security] -->|Applies Rules| Microservice_App
+        
+        Sec4[Istio: Traffic Encryption & Policies]
+        Sec4 -->|Secures Traffic| A
+        Sec4 -->|Secures Traffic| B
+        Sec4 -->|Secures Traffic| C
+    end
+
+    API_Server -->|Processes Requests| Microservice_App
+
+```
+
+
 ## Kyverno
 
 Kyverno is a policy engine designed for Kubernetes. It allows you to manage policies in a Kubernetes-native way. You can use Kyverno to validate, mutate, and generate configurations. Kyverno policies are Kubernetes resources, which means you can manage them using kubectl, GitOps tools, or any other Kubernetes-native tooling.
