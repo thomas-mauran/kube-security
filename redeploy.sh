@@ -1,15 +1,15 @@
 #!/bin/bash
 
-docker build web -t web
-docker save web:latest -o web.tar
-sudo k3s ctr images import web.tar
+# docker build web -t web
+# docker save web:latest -o web.tar
+# sudo k3s ctr images import web.tar
 
-kubectl -n app delete deployment web-deployment
-kubectl -n app delete svc web-service
+# kubectl -n app delete deployment web-deployment
+# kubectl -n app delete svc web-service
 
-kubectl apply -f kube/web
+# kubectl apply -f kube/web
 
-echo "[X]  Build and imported web image"
+# echo "[X]  Build and imported web image"
 
 docker build api-verbs -t verbs
 docker save verbs:latest -o verbs.tar

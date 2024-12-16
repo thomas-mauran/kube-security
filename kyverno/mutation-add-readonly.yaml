@@ -1,0 +1,16 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-read-only-root-filesystem
+spec:
+  rules:
+    - name: add-read-only-root-filesystem
+      match:
+        resources:
+          kinds:
+            - Deployment
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/spec/containers/0/securityContext/readOnlyRootFilesystem
+            value: true

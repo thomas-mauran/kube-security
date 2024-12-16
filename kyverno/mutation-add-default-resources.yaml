@@ -1,0 +1,27 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: default-resource-limits
+spec:
+  rules:
+    - name: set-default-limits
+      match:
+        resources:
+          kinds:
+            - Deployment
+      mutate:
+        foreach:
+          - list: "request.object.spec.template.spec.containers"
+            patchStrategicMerge:
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: "{{ element.name }}" # Retain the container name
+                        resources:
+                          limits:
+                            memory: "128Mi"
+                            cpu: "500m"
+                          requests:
+                            memory: "64Mi"
+                            cpu: "250m"

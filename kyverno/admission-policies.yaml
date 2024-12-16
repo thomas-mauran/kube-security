@@ -1,0 +1,46 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: admission-policies
+spec:
+  validationFailureAction: enforce
+  rules:
+  - name: check-resource-limits
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Pods must have defined resource limits."
+      pattern:
+        spec:
+          containers:
+          - resources:
+              limits:
+                memory: "?*"
+                cpu: "?*"
+  - name: restrict-namespace
+    match:
+      resources:
+        kinds:
+          - Deployment
+    validate:
+      message: "Deployments must be created in the 'app' namespace."
+      pattern:
+        metadata:
+          namespace: app
+
+  - name: enforce-read-only-root-filesystem
+    match:
+      resources:
+        kinds:
+          - Deployment
+    validate:
+      message: "Containers must run with a read-only root filesystem."
+      pattern:
+        spec:
+          template:
+            spec:
+              containers:
+                - securityContext:
+                    readOnlyRootFilesystem: true
