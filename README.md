@@ -91,6 +91,10 @@ Falco is a runtime security tool that detects unexpected behavior in your applic
 
 ### Installation
 
+https://falco.org/docs/getting-started/falco-kubernetes-quickstart/
+
+
+
 ```bash
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
@@ -128,9 +132,7 @@ kubectl get configmap -n falco falco -o yaml
 
 #### WebUI
 
-```bash
-helm install falco-sidekick falcosecurity/falcosidekick --namespace falco
-```
+the web ui is easy to install following this tutorial: https://falco.org/docs/getting-started/falco-kubernetes-quickstart/
 
 ## Kubearmor
 
@@ -230,3 +232,36 @@ Here we can see the log of the audit on the right after I cat a file in the /etc
 
 ![Audit access to /etc/nginx](./assets/audit.png)
 
+## Istio
+
+Istio is a service mesh that provides traffic encryption, traffic management, and security policies. 
+You can use Istio to encrypt traffic between services, to manage traffic between services, and to enforce security policies on your services.
+
+[documentation](https://istio.io/latest/docs/setup/getting-started/)
+
+### Installation
+
+```bash
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.24.1
+export PATH=$PWD/bin:$PATH
+```
+
+```bash
+istioctl install -f samples/bookinfo/demo-profile-no-gateways.yaml -y
+``` 
+
+We are going to add a label to our namespace to instruct Istio to automatically inject the envoy sidecar.
+
+Envoy is a proxy that is injected into your pods by Istio. It intercepts all incoming and outgoing traffic from your pods, and it enforces the traffic policies that you define in Istio.
+
+```bash
+kubectl label namespace app istio-injection=enabled
+```
+
+We also need to install the gateway api crd
+
+```bash
+kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+{ kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -; }
+```
