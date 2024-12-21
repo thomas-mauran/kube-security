@@ -21,13 +21,12 @@ kubectl apply -f ./falco
 
 # Istio
 
-istioctl install -f samples/bookinfo/demo-profile-no-gateways.yaml -y
+istioctl install -f istio/demo-profile-no-gateways.yaml  -y
 
 kubectl label namespace app istio-injection=enabled
 
 kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
 { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -; }
-
 
 kubectl apply -f ./istio/
 

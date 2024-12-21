@@ -4,11 +4,35 @@ metadata:
   name: default-resource-limits
 spec:
   rules:
-    - name: set-default-limits
+    # Rule for Pod resources
+    - name: set-default-limits-for-pods
       match:
         resources:
           kinds:
             - Pod
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers"
+            patchStrategicMerge:
+              metadata:
+                annotations:
+                  kyverno.io/mutated: "true"
+              spec:
+                containers:
+                  - name: "{{ element.name }}" # Retain the container name
+                    resources:
+                      limits:
+                        memory: "128Mi"
+                        cpu: "500m"
+                      requests:
+                        memory: "64Mi"
+                        cpu: "250m"
+
+    # Rule for Deployment resources
+    - name: set-default-limits-for-deployments
+      match:
+        resources:
+          kinds:
             - Deployment
       mutate:
         foreach:

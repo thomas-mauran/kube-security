@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aggreg-test
+  template:
+    metadata:
+      labels:
+        app: aggreg-test
+    spec:
+      containers:
+      - name: aggreg-test
+        image: aggregator:latest
+        imagePullPolicy: Never

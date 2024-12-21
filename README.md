@@ -29,6 +29,19 @@ graph TD
 ```
 
 
+## Quick install
+
+Using the ./full-install.sh script you can install all the components in one go.
+
+```bash
+chmod +x full-install.sh
+./full-install.sh
+```
+
+> Make sure you have istioctl and helm installed.
+
+This version doesn't install the kubearmor component as it seems to overlap with the other components.
+
 ## Kyverno
 
 Kyverno is a policy engine designed for Kubernetes. It allows you to manage policies in a Kubernetes-native way. You can use Kyverno to validate, mutate, and generate configurations. Kyverno policies are Kubernetes resources, which means you can manage them using kubectl, GitOps tools, or any other Kubernetes-native tooling.
@@ -85,6 +98,36 @@ Mutation policies are a way to modify resources before they are created. For exa
 
 available here [default resources limits](./kyverno/mutation-add-default-ressources.yaml) and [root readonly pods](./kyverno/mutation-add-readonly.yaml)
 
+
+### Test the policies
+
+First delete the mutation policies 
+
+
+```bash
+kubectl delete clusterpolicy default-resource-limits
+kubectl delete clusterpolicy enforce-read-only-root-filesystem
+```
+
+Then try to apply bad resources
+
+```bash
+kubectl apply -f ./kyverno/tests
+```
+We see that our resources are not created because they don't respect the policies.
+
+```bash
+kubectl apply -f ./kyverno/
+```
+
+Now that we added the mutation policies we can see that we can apply our resources.
+
+```bash
+kubectl apply -f ./kyverno/tests/test-readonly.yaml
+kubectl apply -f ./kyverno/tests/test-resources.yaml
+```
+
+```bash
 ## Falco
 
 Falco is a runtime security tool that detects unexpected behavior in your applications. It can detect things like shell activity, file access, network activity, and more. Falco uses a set of rules to detect these behaviors, and you can write your own rules to detect custom behaviors.
@@ -150,7 +193,7 @@ export PATH=$PWD/bin:$PATH
 ```
 
 ```bash
-istioctl install -f samples/bookinfo/demo-profile-no-gateways.yaml -y
+istioctl install -f istio/demo-profile-no-gateways.yaml  -y
 ``` 
 
 We are going to add a label to our namespace to instruct Istio to automatically inject the envoy sidecar.
