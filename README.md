@@ -134,7 +134,97 @@ kubectl get configmap -n falco falco -o yaml
 
 the web ui is easy to install following this tutorial: https://falco.org/docs/getting-started/falco-kubernetes-quickstart/
 
+## Istio
+
+Istio is a service mesh that provides traffic encryption, traffic management, and security policies. 
+You can use Istio to encrypt traffic between services, to manage traffic between services, and to enforce security policies on your services.
+
+[documentation](https://istio.io/latest/docs/setup/getting-started/)
+
+### Installation
+
+```bash
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.24.1
+export PATH=$PWD/bin:$PATH
+```
+
+```bash
+istioctl install -f samples/bookinfo/demo-profile-no-gateways.yaml -y
+``` 
+
+We are going to add a label to our namespace to instruct Istio to automatically inject the envoy sidecar.
+
+Envoy is a proxy that is injected into your pods by Istio. It intercepts all incoming and outgoing traffic from your pods, and it enforces the traffic policies that you define in Istio.
+
+```bash
+kubectl label namespace app istio-injection=enabled
+```
+
+We also need to install the gateway api crd
+
+```bash
+kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+{ kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -; }
+```
+
+#### Traffic encryption
+
+We can enable mutual TLS between the services by enabling the `STRICT` mode.
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: app
+spec:
+  mtls:
+    mode: STRICT
+    
+```
+
+### Kiali
+
+Kilia is a tool that helps you visualize the traffic in your Istio service mesh. It provides a graphical interface that shows you the traffic between your services, and it allows you to drill down into the details of the traffic.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.24/samples/addons/kiali.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.24/samples/addons/prometheus.yaml --namespace istio-system
+
+kubectl apply -f ./istio/
+```
+
+![Kiali](./assets/kiali.png)
+
+We can see in this schema that our services speak using a secured connexion, we 
+can ensure that by connecting to a pod and running tcpdump.
+
+output
+```bash
+20:20:24.887602 IP istiod.istio-system.svc.cluster.local.15012 > aggregator-deployment-764dcfd487-4pq7d.36532: Flags [P.], seq 1246457591:1246457630, ack 3702643983, win 7000, options [nop,nop,TS val 1401211848 ecr 1888747397], length 39
+20:20:24.887645 IP aggregator-deployment-764dcfd487-4pq7d.36532 > istiod.istio-system.svc.cluster.local.15012: Flags [.], ack 39, win 3819, options [nop,nop,TS val 1888761969 ecr 1401211848], length 0
+20:20:24.887767 IP aggregator-deployment-764dcfd487-4pq7d.36532 > istiod.istio-system.svc.cluster.local.15012: Flags [P.], seq 1:40, ack 39, win 3819, options [nop,nop,TS val 1888761969 ecr 1401211848], length 39
+20:20:24.888700 IP aggregator-deployment-764dcfd487-4pq7d.50674 > kube-dns.kube-system.svc.cluster.local.domain: 36229+ PTR? 2.219.43.10.in-addr.arpa. (42)
+20:20:24.889227 IP kube-dns.kube-system.svc.cluster.local.domain > aggregator-deployment-764dcfd487-4pq7d.50674: 36229*- 1/0/0 PTR istiod.istio-system.svc.cluster.local. (117)
+20:20:24.889581 IP aggregator-deployment-764dcfd487-4pq7d.57126 > kube-dns.kube-system.svc.cluster.local.domain: 20993+ PTR? 10.0.43.10.in-addr.arpa. (41)
+20:20:24.890049 IP kube-dns.kube-system.svc.cluster.local.domain > aggregator-deployment-764dcfd487-4pq7d.57126: 20993*- 1/0/0 PTR kube-dns.kube-system.svc.cluster.local. (116)
+20:20:24.929828 IP istiod.istio-system.svc.cluster.local.15012 > aggregator-deployment-764dcfd487-4pq7d.36532: Flags [.], ack 40, win 7000, options [nop,nop,TS val 1401211891 ecr 1888761969], length 0
+20:20:25.154690 IP 10.42.0.1.34116 > aggregator-deployment-764dcfd487-4pq7d.15021: Flags [S], seq 2882518896, win 64860, options [mss 1410,sackOK,TS val 2885481094 ecr 0,nop,wscale 7], length 0
+20:20:25.154770 IP aggregator-deployment-764dcfd487-4pq7d.15021 > 10.42.0.1.34116: Flags [S.], seq 2318760215, ack 2882518897, win 64308, options [mss 1410,sackOK,TS val 1899494745 ecr 2885481094,nop,wscale 7], length 0
+20:20:25.154871 IP 10.42.0.1.34116 > aggregator-deployment-764dcfd487-4pq7d.15021: Flags [.], ack 1, win 507, options [nop,nop,TS val 2885481095 ecr 1899494745], length 0
+20:20:25.155118 IP aggregator-deployment-764dcfd487-4pq7d.43241 > kube-dns.kube-system.svc.cluster.local.domain: 13876+ PTR? 1.0.42.10.in-addr.arpa. (40)
+```
+
+
+The logs showing traffic between the sidecar proxy (localhost.15020) and Istio control plane (istiod.istio-system.svc.cluster.local.15012), along with istioctl proxy-config verification, confirm that mTLS is enabled and securing communication.
+
+
+
 ## Kubearmor
+
+I also tried kubearmor but it seems like the overlap with other component make it a bit hard to maintain
 
 Kubearmor is a runtime security tool that enforces security policies on your Kubernetes cluster. It can enforce policies like preventing containers from running as root, preventing containers from running with dangerous capabilities, and preventing containers from running with dangerous volumes.
 
@@ -231,37 +321,3 @@ spec:
 Here we can see the log of the audit on the right after I cat a file in the /etc/nginx directory.
 
 ![Audit access to /etc/nginx](./assets/audit.png)
-
-## Istio
-
-Istio is a service mesh that provides traffic encryption, traffic management, and security policies. 
-You can use Istio to encrypt traffic between services, to manage traffic between services, and to enforce security policies on your services.
-
-[documentation](https://istio.io/latest/docs/setup/getting-started/)
-
-### Installation
-
-```bash
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.24.1
-export PATH=$PWD/bin:$PATH
-```
-
-```bash
-istioctl install -f samples/bookinfo/demo-profile-no-gateways.yaml -y
-``` 
-
-We are going to add a label to our namespace to instruct Istio to automatically inject the envoy sidecar.
-
-Envoy is a proxy that is injected into your pods by Istio. It intercepts all incoming and outgoing traffic from your pods, and it enforces the traffic policies that you define in Istio.
-
-```bash
-kubectl label namespace app istio-injection=enabled
-```
-
-We also need to install the gateway api crd
-
-```bash
-kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-{ kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -; }
-```

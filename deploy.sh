@@ -1,5 +1,7 @@
 #!/bin/bash
 
+kubectl create ns app
+
 # docker build web -t web
 # docker save web:latest -o web.tar
 # sudo k3s ctr images import web.tar
