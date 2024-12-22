@@ -127,7 +127,6 @@ kubectl apply -f ./kyverno/tests/test-readonly.yaml
 kubectl apply -f ./kyverno/tests/test-resources.yaml
 ```
 
-```bash
 ## Falco
 
 Falco is a runtime security tool that detects unexpected behavior in your applications. It can detect things like shell activity, file access, network activity, and more. Falco uses a set of rules to detect these behaviors, and you can write your own rules to detect custom behaviors.
